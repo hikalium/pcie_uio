@@ -47,6 +47,18 @@ class DevPci {
       exit(1);
     }
   }
+  void WaitInterruptPolling() {
+    uint16_t command;
+    ReadPciReg(kCommandReg, command);
+    command &= ~kCommandRegInterruptDisableFlag;
+    WritePciReg(kCommandReg, command);
+
+    uint16_t status;
+    for (;;) {
+      ReadPciReg(kStatusReg, status);
+      if (status & kStatusRegFlagInterruptStatus) break;
+    }
+  }
   bool HasClassCodes(uint8_t req_base_class, uint8_t req_sub_class,
                      uint8_t req_program_interface) {
     uint8_t base_class, sub_class, program_interface;
@@ -106,6 +118,7 @@ class DevPci {
   static const uint8_t kHeaderTypeRegValueDeviceTypeBridge = 0x01;
   static const uint8_t kHeaderTypeRegValueDeviceTypeCardbus = 0x02;
 
+  static const uint16_t kStatusRegFlagInterruptStatus = 1 << 3;
   static const uint16_t kStatusRegFlagCapListAvailable = 1 << 4;
 
   static const uint32_t kRegBaseAddrFlagIo = 1 << 0;
